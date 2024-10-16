@@ -1,8 +1,6 @@
 <template>
   <div class="flex h-screen w-screen items-center justify-center">
-    <div class="h-[30rem] w-[30rem]">
-      <DragZoomImg class="h-[30rem] w-[30rem]" :src="red" :zoom-scale="5" />
-    </div>
+    <ZoomMapWrapper class="h-[32rem] w-[32rem]" :src="red" />
   </div>
 </template>
 
