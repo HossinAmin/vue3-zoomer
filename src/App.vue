@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen w-screen items-center justify-center">
-    <Magnifier class="h-[44rem]" :src="red" />
+    <ZoomMapWrapper class="h-[32rem] w-[32rem]" :src="red" />
   </div>
 </template>
 
