@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import "./assets/css/main.css";
 import red from "./assets/images/red.jpg";
-import ZoomMapWrapper from "./components/Wrapper/ZoomMapWrapper.vue";
+import "./assets/css/main.css";
+import DragZoomImg from "./components/DragZoomImg.vue";
 </script>
