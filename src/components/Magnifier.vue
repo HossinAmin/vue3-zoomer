@@ -33,8 +33,9 @@
 
 <script setup lang="ts">
 import type { PositionType } from "~/types";
-import { computed, ref, useTemplateRef } from "vue";
-import { useMouseInElement } from "@vueuse/core";
+import { ref, computed, useTemplateRef } from "vue";
+import { getRelCursorPosition } from "~/utils/cursorPosition";
+import { getAbsTouchPosition } from "~/utils/touchPosition";
 import { pos2offset } from "~/utilities/zoomCalculations";
 
 const props = defineProps({
@@ -74,6 +75,22 @@ const zoomedImgOffset = computed(() => {
 });
 
 const handleMouseMove = (event: MouseEvent) => {
+  if (containerRef.value) {
+    const { pos, isOutside: outside } = getRelCursorPosition(
+      event,
+      containerRef.value,
+    );
+
+    isOutside.value = outside;
+
+    if (!isOutside.value) {
+      // Update position for the magnifier
+      position.value = {
+        left: pos.left - magnifierSize.value / 2,
+        top: pos.top - magnifierSize.value / 2,
+      };
+    }
+  }
   const containerRect = containerRef.value?.getBoundingClientRect() as DOMRect;
   position.value = {
     left: event.clientX - containerRect?.left - magnifierSize.value / 2,
@@ -97,10 +114,10 @@ const handleWheel = (event: WheelEvent) => {
 
 const handleTouchMove = (event: TouchEvent) => {
   const containerRect = containerRef.value?.getBoundingClientRect() as DOMRect;
-  const touch = getTouchPosition(event);
+  const touch = getAbsTouchPosition(event);
   position.value = {
-    left: touch.clientX - containerRect.left - magnifierSize.value / 2,
-    top: touch.clientY - containerRect.top - magnifierSize.value / 2,
+    left: touch.left - containerRect.left - magnifierSize.value / 2,
+    top: touch.top - containerRect.top - magnifierSize.value / 2,
   };
 };
 </script>
