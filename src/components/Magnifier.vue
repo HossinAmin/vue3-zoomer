@@ -4,6 +4,7 @@
     ref="containerRef"
     @mousemove="handleMouseMove"
     @wheel="handleWheel"
+    @touchmove.prevent="handleTouchMove"
   >
     <img class="h-full w-full object-fill" alt="image" :src="src" />
     <div
@@ -32,8 +33,9 @@
 
 <script setup lang="ts">
 import type { PositionType } from "~/types";
-import { ref, computed, useTemplateRef } from "vue";
-import { getCursorPosition } from "~/utils/cursorPosition";
+import { computed, ref, useTemplateRef } from "vue";
+import { useMouseInElement } from "@vueuse/core";
+import { pos2offset } from "~/utilities/zoomCalculations";
 
 const props = defineProps({
   src: {
@@ -57,36 +59,26 @@ const isOutside = ref(false);
 const magnifierSize = ref(props.magnifierInitialSize);
 
 const zoomedImgOffset = computed(() => {
+  // Add half magnifier size to the position before converting to offset
+  const pos = {
+    left: position.value.left + magnifierSize.value / 2,
+    top: position.value.top + magnifierSize.value / 2,
+  };
+  const offset = pos2offset(pos, props.zoomScale);
+
+  // Remove the added size after conversion
   return {
-    left: -(
-      (position.value.left + magnifierSize.value / 2) * props.zoomScale -
-      magnifierSize.value / 2
-    ),
-    top: -(
-      (position.value.top + magnifierSize.value / 2) * props.zoomScale -
-      magnifierSize.value / 2
-    ),
+    left: offset.left + magnifierSize.value / 2,
+    top: offset.top + magnifierSize.value / 2,
   };
 });
 
 const handleMouseMove = (event: MouseEvent) => {
-  if (containerRef.value) {
-    const {
-      relativeX,
-      relativeY,
-      isOutside: outside,
-    } = getCursorPosition(event, containerRef.value);
-
-    isOutside.value = outside;
-
-    if (!isOutside.value) {
-      // Update position for the magnifier
-      position.value = {
-        left: relativeX - magnifierSize.value / 2,
-        top: relativeY - magnifierSize.value / 2,
-      };
-    }
-  }
+  const containerRect = containerRef.value?.getBoundingClientRect() as DOMRect;
+  position.value = {
+    left: event.clientX - containerRect?.left - magnifierSize.value / 2,
+    top: event.clientY - containerRect?.top - magnifierSize.value / 2,
+  };
 };
 
 const handleWheel = (event: WheelEvent) => {
@@ -101,5 +93,14 @@ const handleWheel = (event: WheelEvent) => {
       magnifierSize.value + 10,
     );
   }
+};
+
+const handleTouchMove = (event: TouchEvent) => {
+  const containerRect = containerRef.value?.getBoundingClientRect() as DOMRect;
+  const touch = getTouchPosition(event);
+  position.value = {
+    left: touch.clientX - containerRect.left - magnifierSize.value / 2,
+    top: touch.clientY - containerRect.top - magnifierSize.value / 2,
+  };
 };
 </script>

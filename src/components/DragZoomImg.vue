@@ -12,6 +12,9 @@
     @mousemove="drag"
     @mouseup="stopDrag"
     @mouseleave="handleMouseLeave"
+    @touchstart.prevent="startDrag"
+    @touchmove.prevent="drag"
+    @touchend.prevent="stopDrag"
   >
     <img
       alt="zoom-image"
@@ -20,6 +23,7 @@
       :src="src"
       :style="{
         transform: `scale(${scale}) translate(${offset.left}px, ${offset.top}px)`,
+        transition: isTransition ? 'transform 200ms ease-in-out' : 'none',
       }"
     />
   </div>
@@ -27,6 +31,7 @@
 
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, PropType } from "vue";
+import { useTransition } from "~/composables/useTransition";
 
 const props = defineProps({
   src: {
@@ -45,9 +50,10 @@ const props = defineProps({
 
 const containerRef = useTemplateRef("containerRef");
 
+const { isTransition, startTransition } = useTransition();
 const prevPosition = ref({ x: 0, y: 0 });
 const offset = ref({ left: 0, top: 0 });
-const mouseDownPosition = ref({ x: 0, y: 0 });
+const mouseDownPosition = ref({ left: 0, top: 0 });
 
 const isZoomed = ref(false);
 const isDragging = ref(false);
@@ -57,6 +63,7 @@ const scale = computed(() => (isZoomed.value ? props.zoomScale : 1));
 const handleMouseEnter = () => {
   if (props.trigger === "hover") {
     isZoomed.value = true;
+    startTransition(250);
   }
 };
 
@@ -66,9 +73,11 @@ const startDrag = (event: MouseEvent) => {
       x: event.clientX,
       y: event.clientY,
     };
+    startTransition(250);
   }
 
-  if (!isZoomed.value && props.trigger === "hover") return;
+  if (!isZoomed.value && props.trigger === "hover" && !isTransition.value)
+    return;
 
   isDragging.value = true;
   prevPosition.value = {
@@ -77,8 +86,7 @@ const startDrag = (event: MouseEvent) => {
   };
 };
 
-const drag = (event: MouseEvent) => {
-  if (!isDragging.value) return;
+const calcDragOffset = (event: MouseEvent | TouchEvent) => {
   const elementHeight = containerRef.value?.clientHeight ?? 0;
   const elementWidth = containerRef.value?.clientWidth ?? 0;
 
@@ -88,33 +96,22 @@ const drag = (event: MouseEvent) => {
   const maxXOffset =
     (elementWidth * props.zoomScale - elementWidth) / (props.zoomScale * 2);
 
-  const dx = (event.clientX - prevPosition.value.x) / props.zoomScale;
-  const dy = (event.clientY - prevPosition.value.y) / props.zoomScale;
+  let { clientLeft, clientTop } = getCurrentPos(event);
+
+  const dx = (clientLeft - prevPosition.value.left) / props.zoomScale;
+  const dy = (clientTop - prevPosition.value.top) / props.zoomScale;
 
   offset.value = {
     left: Math.min(maxXOffset, Math.max(offset.value.left + dx, -maxXOffset)),
     top: Math.min(maxYOffset, Math.max(offset.value.top + dy, -maxYOffset)),
   };
 
-  prevPosition.value = {
-    x: event.clientX,
-    y: event.clientY,
-  };
+  prevPosition.value = { left: clientLeft, top: clientTop };
 };
 
-const stopDrag = (event: MouseEvent) => {
-  isDragging.value = false;
-
-  if (props.trigger === "click") {
-    if (!isZoomed.value) {
-      isZoomed.value = true;
-    } else if (
-      mouseDownPosition.value.x === event.clientX &&
-      mouseDownPosition.value.y === event.clientY
-    ) {
-      resetPosition();
-    }
-  }
+const drag = (event: MouseEvent | TouchEvent) => {
+  if (!isDragging.value) return;
+  calcDragOffset(event);
 };
 
 const handleMouseLeave = () => {
@@ -123,7 +120,36 @@ const handleMouseLeave = () => {
   }
 };
 
+const startDrag = (event: MouseEvent | TouchEvent) => {
+  let { clientLeft, clientTop } = getCurrentPos(event);
+
+  mouseDownPosition.value = { left: clientLeft, top: clientTop };
+  prevPosition.value = { left: clientLeft, top: clientTop };
+
+  if (!isZoomed.value && props.trigger === "hover") return;
+
+  isDragging.value = true;
+};
+
+const stopDrag = (event: TouchEvent | MouseEvent) => {
+  isDragging.value = false;
+
+  let { clientLeft, clientTop } = getCurrentPos(event);
+
+  if (props.trigger === "click" || event instanceof TouchEvent) {
+    if (!isZoomed.value) {
+      isZoomed.value = true;
+    } else if (
+      mouseDownPosition.value.left === clientLeft &&
+      mouseDownPosition.value.top === clientTop
+    ) {
+      resetPosition();
+    }
+  }
+};
+
 const resetPosition = () => {
+  isTransition.value = true;
   isZoomed.value = false;
   offset.value = { left: 0, top: 0 };
 };
