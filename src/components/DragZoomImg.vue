@@ -23,6 +23,7 @@
       :src="src"
       :style="{
         transform: `scale(${scale}) translate(${offset.left}px, ${offset.top}px)`,
+        transition: isTransition ? 'transform 200ms ease-in-out' : 'none',
       }"
     />
   </div>
@@ -30,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, PropType } from "vue";
-import { getTouchPosition } from "~/utils/touchPosition";
+import { useTransition } from "~/composables/useTransition";
 
 const props = defineProps({
   src: {
@@ -49,7 +50,8 @@ const props = defineProps({
 
 const containerRef = useTemplateRef("containerRef");
 
-const prevPosition = ref({ left: 0, top: 0 });
+const { isTransition, startTransition } = useTransition();
+const prevPosition = ref({ x: 0, y: 0 });
 const offset = ref({ left: 0, top: 0 });
 const mouseDownPosition = ref({ left: 0, top: 0 });
 
@@ -61,22 +63,26 @@ const scale = computed(() => (isZoomed.value ? props.zoomScale : 1));
 const handleMouseEnter = () => {
   if (props.trigger === "hover") {
     isZoomed.value = true;
+    startTransition(250);
   }
 };
 
-const getCurrentPos = (event: MouseEvent | TouchEvent) => {
-  let clientLeft, clientTop;
-  if (event instanceof TouchEvent) {
-    const touch = getTouchPosition(event);
-    clientLeft = touch.clientLeft;
-    clientTop = touch.clientTop;
-  } else {
-    clientLeft = event.clientX;
-    clientTop = event.clientY;
+const startDrag = (event: MouseEvent) => {
+  if (props.trigger === "click") {
+    mouseDownPosition.value = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    startTransition(250);
   }
-  return {
-    clientLeft,
-    clientTop,
+
+  if (!isZoomed.value && props.trigger === "hover" && !isTransition.value)
+    return;
+
+  isDragging.value = true;
+  prevPosition.value = {
+    x: event.clientX,
+    y: event.clientY,
   };
 };
 
@@ -143,6 +149,7 @@ const stopDrag = (event: TouchEvent | MouseEvent) => {
 };
 
 const resetPosition = () => {
+  isTransition.value = true;
   isZoomed.value = false;
   offset.value = { left: 0, top: 0 };
 };
