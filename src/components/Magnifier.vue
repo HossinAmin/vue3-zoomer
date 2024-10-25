@@ -55,9 +55,7 @@ const props = defineProps({
 const containerRef = useTemplateRef("containerRef");
 
 const position = ref<PositionType>({ left: 0, top: 0 });
-
-const { isOutside } = useMouseInElement(containerRef);
-
+const isOutside = ref(false);
 const magnifierSize = ref(props.magnifierInitialSize);
 
 const zoomedImgOffset = computed(() => {
