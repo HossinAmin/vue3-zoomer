@@ -22,8 +22,11 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, ref, computed } from "vue";
+import { PropType, computed, useTemplateRef } from "vue";
+import { calZoomedImgOffset } from "~/utils/zoom";
+import { getCursorPosition } from "~/utils/cursorPosition";
 import { useTransition } from "~/composables/useTransition";
+import useMultiZoom from "~/composables/useMultiZoom";
 
 const props = defineProps({
   src: {
