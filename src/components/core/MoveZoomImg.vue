@@ -49,12 +49,9 @@ const props = defineProps({
   },
 });
 
-const { startTransition, isTransition } = useTransition();
-
-const imgRef = ref<HTMLImageElement>();
-const containerRef = ref<HTMLDivElement>();
-const isZoomed = ref(false);
-
+const currentScale = defineModel("currentScale", {
+  default: 1,
+});
 const zoomedImgOffset = defineModel("zoomedImgOffset", {
   default: {
     left: 0,
@@ -62,8 +59,17 @@ const zoomedImgOffset = defineModel("zoomedImgOffset", {
   },
 });
 
+const containerRef = useTemplateRef("containerRef");
+
 const isZoomed = computed(() => currentScale.value > 1);
-const { zoomDir, zoomInOut } = useMultiZoom();
+
+const { isTransition, startTransition } = useTransition();
+const { zoomDir, multiStepZoomIn } = useMultiZoom(
+  currentScale,
+  zoomedImgOffset,
+  containerRef,
+  props.zoomScale,
+);
 
 const cursorStyle = computed(() => (isZoomed.value ? "zoom-out" : "zoom-in"));
 
@@ -93,6 +99,7 @@ const calculateZoomPosition = (x: number, y: number) => {
 
 const handleMouseEnter = (event: MouseEvent) => {
   if (props.trigger === "hover") {
+<<<<<<< HEAD
     currentScale.value = props.zoomScale;
     startTransition(250);
 
@@ -110,6 +117,11 @@ const handleMouseEnter = (event: MouseEvent) => {
       props.zoomScale,
 >>>>>>> ab76424 (utils name updates)
     );
+=======
+    const { pos: relPos } = getRelCursorPosition(event, containerRef.value);
+    startTransition(150);
+    multiStepZoomIn(currentScale.value, relPos, props.step ?? props.zoomScale);
+>>>>>>> abe41e7 (optimize multi zoom functionality)
   }
 };
 
@@ -118,6 +130,7 @@ const handleMouseLeave = () => {
   resetPosition();
 };
 
+<<<<<<< HEAD
 const handleClick = () => {
   // single click
   if (!props.step && props.trigger === "click") {
@@ -177,6 +190,12 @@ const handleClick = () => {
       scale,
     );
   }
+=======
+const handleClick = (event: MouseEvent) => {
+  const { pos: relPos } = getRelCursorPosition(event, containerRef.value);
+  startTransition(150);
+  multiStepZoomIn(currentScale.value, relPos, props.step ?? props.zoomScale);
+>>>>>>> abe41e7 (optimize multi zoom functionality)
 };
 
 const handleMouseMove = (event: MouseEvent) => {
