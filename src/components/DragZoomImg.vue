@@ -31,7 +31,8 @@
 
 <script setup lang="ts">
 import { ref, computed, useTemplateRef, PropType } from "vue";
-import { useTransition } from "~/composables/useTransition";
+import { getTouchPosition } from "../utils/touchPosition";
+import { useTransition } from "../composables/useTransition";
 
 const props = defineProps({
   src: {
