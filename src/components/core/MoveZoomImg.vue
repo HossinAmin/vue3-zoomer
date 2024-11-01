@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, computed, useTemplateRef } from "vue";
+import { type PropType, computed, useTemplateRef } from "vue";
 import { calZoomedImgOffset } from "~/utils/zoom";
 import { getRelCursorPosition } from "~/utils/cursorPosition";
 import { useTransition } from "~/composables/useTransition";
@@ -44,7 +44,7 @@ const props = defineProps({
   step: {
     type: Number,
   },
-  presist: {
+  persist: {
     type: Boolean,
   },
 });
@@ -126,7 +126,7 @@ const handleMouseEnter = (event: MouseEvent) => {
 };
 
 const handleMouseLeave = () => {
-  if (props.presist) return;
+  if (props.persist) return;
   resetPosition();
 };
 
@@ -193,7 +193,7 @@ const handleClick = () => {
 =======
 const handleClick = (event: MouseEvent) => {
   const { pos: relPos } = getRelCursorPosition(event, containerRef.value);
-  startTransition(150);
+  startTransition();
   multiStepZoomIn(currentScale.value, relPos, props.step ?? props.zoomScale);
 >>>>>>> abe41e7 (optimize multi zoom functionality)
 };
