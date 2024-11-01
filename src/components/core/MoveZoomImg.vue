@@ -204,18 +204,11 @@ const handleMouseMove = (event: MouseEvent) => {
     containerRef.value,
   );
 
-<<<<<<< HEAD
-  if (!cursorPosition.isOutside && isZoomed.value && !isTransition.value) {
-    const { newLeft, newTop } = calculateZoomPosition(
-      cursorPosition.relativeX,
-      cursorPosition.relativeY,
-=======
   if (!isOutside && isZoomed.value && !isTransition.value) {
     zoomedImgOffset.value = calZoomedImgOffset(
       cursorPosition,
       containerRef.value,
       currentScale.value,
->>>>>>> ab76424 (utils name updates)
     );
   }
 };
@@ -229,8 +222,16 @@ const resetPosition = () => {
   };
 };
 
-const startTransition = () => {
-  isTransition.value = true;
-  setTimeout(() => (isTransition.value = false), 150);
-};
+defineExpose({
+  multiZoom: () => {
+    const rect = containerRef.value?.getBoundingClientRect();
+    if (rect) {
+      handleClick({
+        clientX: rect.x + rect.width / 2,
+        clientY: rect.y + rect.height / 2,
+      } as MouseEvent);
+    }
+  },
+  zoomDir,
+});
 </script>
