@@ -1,18 +1,33 @@
 <template>
   <div class="relative">
-    <MoveZoomImg
-      v-if="zoomType === 'move'"
+    <DragZoomImg
+      v-if="isDrag"
+      v-model:current-scale="currentScale"
       v-model:zoomed-img-offset="zoomedImgOffset"
       v-model:current-scale="scale"
       v-bind="props"
+      ref="zoomComponent"
       class="h-full w-full"
     />
-    <DragZoomImg
+
+    <MoveZoomImg
       v-else
       v-model:zoomed-img-offset="zoomedImgOffset"
       v-model:current-scale="scale"
       v-bind="props"
+      ref="zoomComponent"
       class="h-full w-full"
+    />
+
+    <ZoomButtons
+      v-if="showZoomBtns"
+      v-model:zoomed-img-offset="zoomedImgOffset"
+      v-model:current-scale="currentScale"
+      v-bind="props"
+      :max-zoom="currentScale === zoomScale"
+      :min-zoom="currentScale === 1"
+      @zoomIn="handleZoomIn"
+      @zoomOut="handleZoomOut"
     />
 
     <ZoomMap
@@ -58,13 +73,21 @@ const props = defineProps({
   persist: {
     type: Boolean,
   },
+  showZoomBtns: {
+    type: Boolean,
+  },
   showImgMap: {
     type: Boolean,
   },
 });
 
+const currentScale = ref(1);
 const zoomedImgOffset = ref({ left: 0, top: 0 });
 const scale = ref(1);
+
+const isDrag = computed(
+  () => props.zoomType === "drag" || window.innerWidth < 768,
+);
 
 const windowPosition = computed(() => {
   if (scale.value !== 1) {
@@ -72,6 +95,22 @@ const windowPosition = computed(() => {
     return offset2pos(zoomedImgOffset.value, scale.value * 4);
   }
 });
+
+const zoomComponent = useTemplateRef("zoomComponent");
+
+const handleZoomIn = () => {
+  if (zoomComponent.value) {
+    zoomComponent.value.zoomDir = "IN";
+    zoomComponent.value.multiZoom();
+  }
+};
+
+const handleZoomOut = () => {
+  if (zoomComponent.value) {
+    zoomComponent.value.zoomDir = "OUT";
+    zoomComponent.value.multiZoom();
+  }
+};
 
 const updateOffset = (newPosition?: PositionType) => {
   //Multiply scale by 4 because the map window is quarter the map container
